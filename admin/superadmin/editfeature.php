@@ -61,32 +61,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
 
-                    // Update feature files
-                    $featureDir = '../../features';
-
-                    // Frontend file
-                    $frontendFile = $featureDir . '/' . $slug . '.php';
-                    $frontendContent = "<?php\nrequire_once '../config.php';\nrequireLogin();\n\$pageTitle = '" . addslashes($title) . "';\ninclude '../header.php';\n?>\n<main class=\"main-content\"><div class=\"container\">" . $frontendCode . "</div></main>\n<?php include '../footer.php'; ?>";
-                    file_put_contents($frontendFile, $frontendContent);
-                    chmod($frontendFile, 0644);
-
-                    // Backend file
-                    if (!empty($backendCode)) {
-                        $backendFile = $featureDir . '/' . $slug . '-backend.php';
-                        $backendContent = "<?php\nrequire_once '../config.php';\nrequireLogin();\n\$pageTitle = '" . addslashes($title) . " - Settings';\ninclude '../header.php';\n?>\n<main class=\"main-content\"><div class=\"container\">" . $backendCode . "<div class=\"back-link\"><a href=\"/feature.php?slug=" . $slug . "\">← Back to Feature</a></div></div></main>\n<?php include '../footer.php'; ?>";
-                        file_put_contents($backendFile, $backendContent);
-                        chmod($backendFile, 0644);
-                    } else {
-                        // Delete backend file if code is empty
-                        $backendFile = $featureDir . '/' . $slug . '-backend.php';
-                        if (file_exists($backendFile)) {
-                            unlink($backendFile);
-                        }
-                    }
-
                     $message = "✓ Feature updated successfully! <a href='/feature.php?slug=$slug' style='color:#00ff88;'>View Feature</a>";
                     if (!empty($backendCode)) {
-                        $message .= " | <a href='/features/$slug-backend.php' style='color:#ffaa00;'>View Settings</a>";
+                        $message .= " | <a href='/feature_backend.php?slug=$slug' style='color:#ffaa00;'>View Settings</a>";
                     }
                     $messageType = 'success';
                 } else {
@@ -220,9 +197,9 @@ ob_end_flush();
         <?php endif; ?>
 
         <div class="feature-info">
-            <strong>Feature Slug:</strong> de><?php echo htmlspecialchars($feature['slug']); ?></code><br>
+            <strong>Feature Slug:</strong> <code><?php echo htmlspecialchars($feature['slug']); ?></code><br>
             <strong>Created:</strong> <?php echo date('F j, Y, g:i a', strtotime($feature['created_at'])); ?><br>
-            <strong>Status:</strong> 
+            <strong>Status:</strong>
             <span style="color: <?php echo $feature['is_active'] ? '#00ff88' : '#ffaa00'; ?>">
                 <?php echo $feature['is_active'] ? 'Active' : 'Inactive'; ?>
             </span>
@@ -233,9 +210,9 @@ ob_end_flush();
                 <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Basic Information</h3>
                 <div class="form-group">
                     <label for="title">Feature Title *</label>
-                    <input type="text" id="title" name="title" class="form-control" required 
+                    <input type="text" id="title" name="title" class="form-control" required
                            value="<?php echo htmlspecialchars($feature['title']); ?>">
-                    <small style="color: #888;">Note: Changing the title will not change the slug or file names.</small>
+                    <small style="color: #888;">Note: Changing the title will not change the slug or saved feature URL.</small>
                 </div>
 
                 <div class="form-group">

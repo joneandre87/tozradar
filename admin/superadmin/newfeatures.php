@@ -15,8 +15,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $backendCode = $_POST['backend_code'] ?? '';
     $sqlCode = trim($_POST['sql_code'] ?? '');
 
-    $message .= "Title: $title | ";
-
     if (empty($title)) {
         $message = "Error: Title is required!";
         $messageType = 'error';
@@ -24,7 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         try {
             // Generate slug
             $slug = preg_replace('/[^a-z0-9-]/', '', strtolower(str_replace(' ', '-', $title)));
-            $message .= "Slug: $slug | ";
 
             // Check if exists
             $stmt = $pdo->prepare("SELECT id FROM features WHERE slug = ?");
@@ -40,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($result) {
                     $featureId = $pdo->lastInsertId();
-                    $message .= "Feature ID: $featureId | ";
 
                     // Execute SQL if provided
                     if (!empty($sqlCode)) {
@@ -57,31 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
 
-                    // Create feature files
-                    $featureDir = '../../features';
-                    if (!is_dir($featureDir)) {
-                        mkdir($featureDir, 0755, true);
-                    }
-
-                    // Frontend file
-                    $frontendFile = $featureDir . '/' . $slug . '.php';
-                    $frontendContent = "<?php\nrequire_once '../config.php';\nrequireLogin();\n\$pageTitle = '" . addslashes($title) . "';\ninclude '../header.php';\n?>\n<main class=\"main-content\"><div class=\"container\">" . $frontendCode . "</div></main>\n<?php include '../footer.php'; ?>";
-                    file_put_contents($frontendFile, $frontendContent);
-
-                    // Backend file (only create if backend code exists)
-                    if (!empty($backendCode)) {
-                        $backendFile = $featureDir . '/' . $slug . '-backend.php';
-                        $backendContent = "<?php\nrequire_once '../config.php';\nrequireLogin();\n\$pageTitle = '" . addslashes($title) . " - Settings';\ninclude '../header.php';\n?>\n<main class=\"main-content\"><div class=\"container\">" . $backendCode . "<div class=\"back-link\"><a href=\"/feature.php?slug=" . $slug . "\">← Back to Feature</a></div></div></main>\n<?php include '../footer.php'; ?>";
-                        file_put_contents($backendFile, $backendContent);
-                        
-                        // Update header.php to include backend link in menu
-                        updateHeaderMenu($slug, $title);
-                        $message .= "Backend menu link added | ";
-                    }
-
                     $message = "SUCCESS! Feature created: <a href='/feature.php?slug=$slug' style='color:#00ff88;'>View Feature</a>";
                     if (!empty($backendCode)) {
-                        $message .= " | <a href='/features/$slug-backend.php' style='color:#ffaa00;'>Settings Panel</a>";
+                        $message .= " | <a href='/feature_backend.php?slug=$slug' style='color:#ffaa00;'>Settings Panel</a>";
                     }
                     $messageType = 'success';
 
@@ -97,37 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $messageType = 'error';
         }
     }
-}
-
-// Function to update header.php with new backend link
-function updateHeaderMenu($slug, $title) {
-    $headerFile = '../../header.php';
-    
-    if (!file_exists($headerFile)) {
-        return false;
-    }
-    
-    $headerContent = file_get_contents($headerFile);
-    
-    // Find the features dropdown section
-    // Look for the closing </div> of the dropdown menu before Tools section
-    $menuItem = "\n                                <a href=\"/features/$slug-backend.php\" class=\"dropdown-item\">\n                                    <i class=\"fas fa-cog\"></i> " . htmlspecialchars($title) . "\n                                </a>";
-    
-    // Insert before the Tools section or at the end of Features dropdown
-    // Pattern: Find "Tools" dropdown or end of Features dropdown
-    $pattern = '/(<div class="dropdown-item-label">Tools<\/div>)/';
-    
-    if (preg_match($pattern, $headerContent)) {
-        // Insert before Tools section
-        $headerContent = preg_replace($pattern, $menuItem . "\n\$1", $headerContent);
-    } else {
-        // Fallback: find Features dropdown closing and insert before it
-        $pattern = '/(<!-- End Features Dropdown -->|<\/div>\s*<\/div>\s*<!-- Tools -->)/';
-        $headerContent = preg_replace($pattern, $menuItem . "\n\$1", $headerContent);
-    }
-    
-    file_put_contents($headerFile, $headerContent);
-    return true;
 }
 
 $pageTitle = "Add New Feature";
@@ -206,7 +149,7 @@ include '../../header.php';
                     <textarea id="backend_code" name="backend_code" class="form-control code-editor" rows="8" 
                               placeholder="<h3>Settings</h3>"><?php echo htmlspecialchars($_POST['backend_code'] ?? ''); ?></textarea>
                     <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                        Ask AI to give you backend HTML/PHP code for the feature's settings or admin panel. Request code WITHOUT PHP opening tags, header, or footer - just the main content. This should include configuration forms, statistics displays, and data management. Use $pdo for database operations and $_SESSION['user_id'] for the current user. <strong>If provided, a link will be automatically added to the Features menu.</strong>
+                        Ask AI to give you backend HTML/PHP code for the feature's settings or admin panel. Request code WITHOUT PHP opening tags, header, or footer - just the main content. This should include configuration forms, statistics displays, and data management. Use $pdo for database operations and $_SESSION['user_id'] for the current user. Backend content will be rendered through the shared settings page for each feature.
                     </p>
                 </div>
 

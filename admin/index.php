@@ -156,7 +156,7 @@ include '../header.php';
                 </h2>
                 <div class="features-grid">
                     <?php foreach ($featuresWithBackend as $feature): ?>
-                    <a href="/features/<?php echo urlencode($feature['slug']); ?>-backend.php" class="feature-link-card">
+                    <a href="/feature_backend.php?slug=<?php echo urlencode($feature['slug']); ?>" class="feature-link-card">
                         <div class="feature-link-icon">
                             <i class="fas fa-cog"></i>
                         </div>
