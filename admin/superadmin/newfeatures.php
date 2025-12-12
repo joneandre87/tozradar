@@ -307,7 +307,8 @@ Krav og forventninger:
 - Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
 - For frontend og backend kode skal du kun inkludere html kode, <style> tags og <script> tags. Ikke PHP kode.
 - Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.
-- ikke gjør noe med standard css som feks body, header osv. kun spesifiser custom css for de nye elementene du legger til. 
+- ikke gjør noe med standard css som feks body, header osv. kun spesifiser custom css for de nye elementene du legger til. Nettsiden bruker mørke bakgrunner og lys tekst, primærfargen er rød med bitte litt Neon. 
+- Gi koden mye content og mange tilpassningsmuligheter samt funksjoner i et kult, oversiktelig og responsivt design. Del gjerne opp i seksjoner og bruk ikon og stilige effekter, og tilby mye content og informasjon på siden. 
 - Gi meg alle tre kodene for frontend, backend og sql. Altså i en lang kode/ tekst i 1 canvas.
 `;
 
