@@ -169,7 +169,68 @@ include '../../header.php';
                     </p>
 
             
+   <div class="debug-box" style="visibility:hidden;">
+                        <strong>Hvordan systemet henger sammen:</strong>
+                        <ul>
+                            <li>Offentlig side: <code>https://dittdomene/feature.php?slug={slug}</code></li>
+                            <li>Admin/innstillinger: <code>https://dittdomene/feature_backend.php?slug={slug}</code></li>
+                            <li>Database: tabellen <code>features</code> med feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active.</li>
+                            <li>Slug brukes som nøkkel for å koble mot andre features (f.eks. feltet <code>related_slug</code> i egne tabeller som refererer til <code>features.slug</code>).</li>
+                            <li>Backend-kode må bruke <code>$pdo</code> og <code>$_SESSION['user_id']</code> for trygg lagring og autentisering.</li>
+                            <li>Hvis noe krever API-nøkler eller konfig, skal AI eksplisitt be om det.</li>
+                        </ul>
+                    </div>
+                     <div class="debug-box" style="visibility:hidden;">
+                        <strong>Eksempel på forventet pakke og lenking:</strong>
+                        <ul>
+                            <li>Bruk formatet:
+                                <pre style="white-space: pre-wrap; background:#0f0f0f; padding:10px; border-radius:6px;">
+FRONTEND START
+[full HTML med &lt;style&gt; og &lt;script&gt;, knapper som peker til /feature.php?slug=${slug} eller andre slug-baserte lenker]
+FRONTEND END
 
+BACKEND START
+[HTML/PHP for admin-innstillinger som lagrer via $pdo og holder på eksisterende slug]
+BACKEND END
+
+SQL START
+[MySQL DDL/DML. Inkluder felt som "feature_slug" eller "related_slug" som refererer til features.slug]
+SQL END
+                                </pre>
+                            </li>
+                            <li>AI må beskrive hvilke miljøvariabler/API-nøkler som trengs før koden kan kjøres.</li>
+                            <li>Slugs skal aldri regenereres; bruk den som allerede er definert fra tittelen.</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
+                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
+                                  placeholder="FRONTEND START
+...html, css, js for brukergrensesnitt...
+FRONTEND END
+
+BACKEND START
+...html/php for admin-innstillinger...
+BACKEND END
+
+SQL START
+CREATE TABLE ...
+SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></textarea>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                            Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
+                        </p>
+                    </div>
+
+                    <div class="btn-group" style="justify-content: space-between;">
+                        <button type="button" class="btn btn-secondary" id="backToStep1">← Tilbake</button>
+                        <button type="submit" class="btn btn-primary btn-large btn-glow">
+                            <i class="fas fa-plus"></i> Opprett funksjon
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
         <div class="back-link">
             <a href="/admin/superadmin/features.php">← Back to Features</a>
         </div>
