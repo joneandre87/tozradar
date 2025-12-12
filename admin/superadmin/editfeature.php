@@ -113,6 +113,16 @@ $featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
     ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
     ($feature['sql_code'] ?? '') . "\nSQL END";
 
+$featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
+    ($feature['frontend_code'] ?? '') . "\nFRONTEND END\n\nBACKEND START\n" .
+    ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
+    ($feature['sql_code'] ?? '') . "\nSQL END";
+
+$featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
+    ($feature['frontend_code'] ?? '') . "\nFRONTEND END\n\nBACKEND START\n" .
+    ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
+    ($feature['sql_code'] ?? '') . "\nSQL END";
+
 $pageTitle = "Edit Feature";
 include '../../header.php';
 ob_end_flush();
