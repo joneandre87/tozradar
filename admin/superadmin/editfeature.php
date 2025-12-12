@@ -360,3 +360,4 @@ Krav og forventninger:
 </script>
 
 <?php include '../../footer.php'; ?>
+
