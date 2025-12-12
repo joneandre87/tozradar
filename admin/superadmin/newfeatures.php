@@ -168,69 +168,7 @@ include '../../header.php';
                         Dersom funksjonen trenger API-nøkler eller ekstra info må AI be deg om det. Hvis funksjonen lenker til andre tillegg/features må den bruke vår slug-struktur slik databasen er satt opp.
                     </p>
 
-                    <div class="debug-box" style="visibility:hidden;">
-                        <strong>Hvordan systemet henger sammen:</strong>
-                        <ul>
-                            <li>Offentlig side: <code>https://dittdomene/feature.php?slug={slug}</code></li>
-                            <li>Admin/innstillinger: <code>https://dittdomene/feature_backend.php?slug={slug}</code></li>
-                            <li>Database: tabellen <code>features</code> med feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active.</li>
-                            <li>Slug brukes som nøkkel for å koble mot andre features (f.eks. feltet <code>related_slug</code> i egne tabeller som refererer til <code>features.slug</code>).</li>
-                            <li>Backend-kode må bruke <code>$pdo</code> og <code>$_SESSION['user_id']</code> for trygg lagring og autentisering.</li>
-                            <li>Hvis noe krever API-nøkler eller konfig, skal AI eksplisitt be om det.</li>
-                        </ul>
-                    </div>
-
-                    <div class="debug-box" style="visibility:hidden;">
-                        <strong>Eksempel på forventet pakke og lenking:</strong>
-                        <ul>
-                            <li>Bruk formatet:
-                                <pre style="white-space: pre-wrap; background:#0f0f0f; padding:10px; border-radius:6px;">
-FRONTEND START
-[full HTML med &lt;style&gt; og &lt;script&gt;, knapper som peker til /feature.php?slug=${slug} eller andre slug-baserte lenker]
-FRONTEND END
-
-BACKEND START
-[HTML/PHP for admin-innstillinger som lagrer via $pdo og holder på eksisterende slug]
-BACKEND END
-
-SQL START
-[MySQL DDL/DML. Inkluder felt som "feature_slug" eller "related_slug" som refererer til features.slug]
-SQL END
-                                </pre>
-                            </li>
-                            <li>AI må beskrive hvilke miljøvariabler/API-nøkler som trengs før koden kan kjøres.</li>
-                            <li>Slugs skal aldri regenereres; bruk den som allerede er definert fra tittelen.</li>
-                        </ul>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
-                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
-                                  placeholder="FRONTEND START
-...html, css, js for brukergrensesnitt...
-FRONTEND END
-
-BACKEND START
-...html/php for admin-innstillinger...
-BACKEND END
-
-SQL START
-CREATE TABLE ...
-SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></textarea>
-                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                            Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
-                        </p>
-                    </div>
-
-                    <div class="btn-group" style="justify-content: space-between;">
-                        <button type="button" class="btn btn-secondary" id="backToStep1">← Tilbake</button>
-                        <button type="submit" class="btn btn-primary btn-large btn-glow">
-                            <i class="fas fa-plus"></i> Opprett funksjon
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
+            
 
         <div class="back-link">
             <a href="/admin/superadmin/features.php">← Back to Features</a>
@@ -276,15 +214,16 @@ Beskrivelse: ${description || '[mangler beskrivelse]'}
 Slug (brukes i URL og koblinger): ${slug}
 
 Slik fungerer systemet:
-- Offentlig side: https://dittdomene/feature.php?slug=${slug}
-- Admin/innstillinger: https://dittdomene/feature_backend.php?slug=${slug}
+- Offentlig side: https://dittdomene/feature.php?slug=geoip
+- Admin/innstillinger: https://dittdomene/feature_backend.php?slug=geoip
 - Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
 - Slug brukes som primary/foreign key i andre tabeller (f.eks. feltet feature_slug eller related_slug som refererer til features.slug).
 - Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
 
-Lever ALT i samme svar i formatet:
+Lever ALT i samme svar, sammekodeblokk  i formatet:
+"
 FRONTEND START
-[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett og lenker til /feature.php?slug=${slug} eller andre slug-baserte funksjoner]
+[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett og lenker til /feature.php?slug=geoip eller andre slug-baserte funksjoner]
 FRONTEND END
 
 BACKEND START
@@ -295,12 +234,20 @@ SQL START
 [SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB, legg til user_id, slug-felter og relasjoner til andre features via slug]
 SQL END
 
+"
+
+ikke del opp disse i forskjelige kodeblokker.
+
 Krav og forventninger:
 - Koden må være profesjonell, responsiv og ferdig til bruk uten ekstra filer.
-- Beskriv hvilke miljøvariabler/API-nøkler som trengs før det fungerer, og be om manglende verdier.
-- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
+- Dersom det trengs miljøvariabler/API-nøkler fra tredjeparter som trengs før det fungerer, informer om dette og legg inn et felt for å legge dette til i backend panelet.
+- Hvis funksjonen lenker til andre features/tillegg på siden må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
 - Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
-- Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.`;
+- For frontend og backend kode skal du kun inkludere html kode, <style> tags og <script> tags. Ikke PHP kode.
+- Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.
+- ikke gjør noe med standard css som feks body, header osv. kun spesifiser custom css for de nye elementene du legger til. 
+- Gi meg alle tre kodene for frontend, backend og sql. Altså i en lang kode/ tekst i 1 canvas.
+`;
 
     try {
         await navigator.clipboard.writeText(promptText);
