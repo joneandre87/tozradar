@@ -50,45 +50,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $debugLog[] = "Attempting to DELETE feature ID: $featureId";
 
         try {
-            // Get slug first
-            $stmt = $pdo->prepare("SELECT slug FROM features WHERE id = ?");
-            $stmt->execute([$featureId]);
-            $feature = $stmt->fetch();
+            // Delete from DB
+            $stmt = $pdo->prepare("DELETE FROM features WHERE id = ?");
+            $result = $stmt->execute([$featureId]);
 
-            if ($feature) {
-                $debugLog[] = "Feature found: {$feature['slug']}";
-
-                // Delete files
-                $frontFile = '../../features/' . $feature['slug'] . '.php';
-                $backFile = '../../features/' . $feature['slug'] . '-backend.php';
-
-                if (file_exists($frontFile)) {
-                    unlink($frontFile);
-                    $debugLog[] = "Deleted frontend file";
-                }
-                if (file_exists($backFile)) {
-                    unlink($backFile);
-                    $debugLog[] = "Deleted backend file";
-                }
-
-                // Delete from DB
-                $stmt = $pdo->prepare("DELETE FROM features WHERE id = ?");
-                $result = $stmt->execute([$featureId]);
-
-                if ($result) {
-                    $affected = $stmt->rowCount();
-                    $message = "✓ Delete SUCCESS! Rows affected: $affected";
-                    $messageType = 'success';
-                    $debugLog[] = "Delete successful, rows affected: $affected";
-                } else {
-                    $message = "✗ Delete failed";
-                    $messageType = 'error';
-                    $debugLog[] = "Delete failed - execute returned false";
-                }
+            if ($result) {
+                $affected = $stmt->rowCount();
+                $message = "✓ Delete SUCCESS! Rows affected: $affected";
+                $messageType = 'success';
+                $debugLog[] = "Delete successful, rows affected: $affected";
             } else {
-                $message = "✗ Feature not found";
+                $message = "✗ Delete failed";
                 $messageType = 'error';
-                $debugLog[] = "Feature not found in database";
+                $debugLog[] = "Delete failed - execute returned false";
             }
         } catch (Exception $e) {
             $message = "✗ Exception: " . $e->getMessage();
@@ -229,7 +203,7 @@ ob_end_flush();
             <tr>
                 <td><?php echo $feature['id']; ?></td>
                 <td><?php echo htmlspecialchars($feature['title']); ?></td>
-                <td>de><?php echo htmlspecialchars($feature['slug']); ?></code></td>
+                <td><code><?php echo htmlspecialchars($feature['slug']); ?></code></td>
                 <td>
                     <span class="badge badge-<?php echo $feature['is_active'] ? 'active' : 'inactive'; ?>">
                         <?php echo $feature['is_active'] ? 'Active' : 'Inactive'; ?>
