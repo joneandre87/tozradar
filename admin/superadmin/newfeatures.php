@@ -135,56 +135,38 @@ include '../../header.php';
 
         <div class="settings-card" style="background: var(--dark-surface); padding: 2rem; border-radius: 12px;">
             <form method="POST" id="simpleForm">
-                <div class="step" data-step="1">
-                    <h3>Steg 1: Grunninfo</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Start med navn og beskrivelse før du går videre til koden.</p>
-                    <div class="form-group">
-                        <label for="title">Navn på feature *</label>
-                        <input type="text" id="title" name="title" class="form-control" required
-                               value="<?php echo htmlspecialchars($_POST['title'] ?? ''); ?>"
-                               placeholder="f.eks. Bluetooth Scanner">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="description">Kort beskrivelse</label>
-                        <textarea id="description" name="description" class="form-control" rows="3"
-                                  placeholder="Hva gjør denne funksjonen?"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
-                    </div>
-
-                    <div class="btn-group" style="justify-content: flex-end;">
-                        <button type="button" class="btn btn-primary btn-large" id="toStep2">Neste: kode</button>
-                    </div>
+                <h3>1) Grunninfo</h3>
+                <div class="form-group">
+                    <label for="title">Navn på feature *</label>
+                    <input type="text" id="title" name="title" class="form-control" required
+                           value="<?php echo htmlspecialchars($_POST['title'] ?? ''); ?>"
+                           placeholder="f.eks. Bluetooth Scanner">
                 </div>
 
-                <div class="step" data-step="2" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                        <h3 style="margin: 0;">Steg 2: Lim inn alt i ett felt</h3>
-                        <button type="button" id="copyPrompt" class="btn btn-secondary" style="background:#ff0000; border: 1px solid #ff4d4d;">
-                            Trykk her for å kopiere melding du kan sende til AI
-                        </button>
-                    </div>
-                    <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
-                        Lim inn <strong>frontend HTML</strong>, <strong>backend HTML</strong> (innstillinger) og <strong>SQL/database-kode</strong> i samme tekstfelt.
-                        Koden fra AI må være komplett med <code>&lt;html&gt;</code>, <code>&lt;style&gt;</code> og <code>&lt;script&gt;</code> slik at funksjonen fungerer 100% ut av boksen.
-                        Dersom funksjonen trenger API-nøkler eller ekstra info må AI be deg om det. Hvis funksjonen lenker til andre tillegg/features må den bruke vår slug-struktur slik databasen er satt opp.
-                    </p>
+                <div class="form-group">
+                    <label for="description">Kort beskrivelse</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"
+                              placeholder="Hva gjør denne funksjonen?"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
+                </div>
 
-                    <div class="debug-box">
-                        <strong>Tips til AI:</strong>
-                        <ul>
-                            <li>Offentlig visning av feature skjer på <code>https://dittdomene/feature.php?slug={slug}</code>.</li>
-                            <li>Adminsider/innstillinger vises på <code>https://dittdomene/feature_backend.php?slug={slug}</code>.</li>
-                            <li>Andre features knyttes sammen via feltet <code>slug</code> i databasen (tabell <code>features</code> har bl.a. feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).</li>
-                            <li>Backend må bruke <code>$pdo</code> og <code>$_SESSION['user_id']</code> der det trengs.</li>
-                            <li>AI skal spørre om API-nøkler eller annen konfig hvis noe mangler.</li>
-                            <li>Koden skal være produksjonsklar, responsiv og inneholde alt av HTML, CSS og JS i én pakke.</li>
-                        </ul>
-                    </div>
+                <hr style="border-color: var(--border-color); margin: 2rem 0;">
 
-                    <div class="form-group">
-                        <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
-                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
-                                  placeholder="FRONTEND START
+                <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <h3 style="margin: 0;">2) Lim inn alt i ett felt</h3>
+                    <button type="button" id="copyPrompt" class="btn btn-secondary" style="background:#ff0000; border: 1px solid #ff4d4d;">
+                        Trykk her for å kopiere melding du kan sende til AI
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
+                    Lim inn <strong>frontend HTML</strong>, <strong>backend HTML</strong> (innstillinger) og <strong>SQL/database-kode</strong> i samme tekstfelt.
+                    Koden fra AI må være komplett med <code>&lt;html&gt;</code>, <code>&lt;style&gt;</code> og <code>&lt;script&gt;</code> slik at funksjonen fungerer 100% ut av boksen.
+                    Dersom funksjonen trenger API-nøkler eller ekstra info må AI be deg om det. Hvis funksjonen lenker til andre tillegg/features må den bruke vår slug-struktur slik databasen er satt opp.
+                </p>
+
+                <div class="form-group">
+                    <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
+                    <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
+                              placeholder="FRONTEND START
 ...html, css, js for brukergrensesnitt...
 FRONTEND END
 
@@ -195,18 +177,19 @@ BACKEND END
 SQL START
 CREATE TABLE ...
 SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></textarea>
-                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                            Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
-                        </p>
-                    </div>
-
-                    <div class="btn-group" style="justify-content: space-between;">
-                        <button type="button" class="btn btn-secondary" id="backToStep1">← Tilbake</button>
-                        <button type="submit" class="btn btn-primary btn-large btn-glow">
-                            <i class="fas fa-plus"></i> Opprett funksjon
-                        </button>
-                    </div>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                        Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
+                    </p>
                 </div>
+
+BACKEND START
+...html/php for admin-innstillinger...
+BACKEND END
+
+                <h3>3) Opprett</h3>
+                <button type="submit" class="btn btn-primary btn-large btn-glow">
+                    <i class="fas fa-plus"></i> Opprett funksjon
+                </button>
             </form>
         </div>
 
@@ -285,6 +268,38 @@ Krav:
     } catch (err) {
         console.error('Kunne ikke kopiere', err);
         alert('Klarte ikke å kopiere automatisk. Kopier manuelt fra teksten over.');
+    }
+});
+console.log('Feature creation form loaded');
+
+document.getElementById('copyPrompt').addEventListener('click', async () => {
+    const promptText = `Du er en utvikler som skal levere én komplett kodeblokk for en ny feature til TozRadar.
+
+Lever ALT i samme svar og bruk denne strukturen:
+FRONTEND START
+[fullstendig HTML med style + script som fungerer alene i vårt oppsett]
+FRONTEND END
+
+BACKEND START
+[HTML/PHP for admin- og innstillingspanel som bruker $pdo og $_SESSION['user_id'] der det trengs]
+BACKEND END
+
+SQL START
+[SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB og legg til user_id, slug-felter og relasjoner til andre features via slug]
+SQL END
+
+Krav:
+- Koden må være profesjonell, responsiv og ferdig til bruk uten ekstra filer.
+- Hvis funksjonen trenger API-nøkler eller annen konfigurasjon må du spørre meg om det.
+- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør.
+- Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.`;
+
+    try {
+        await navigator.clipboard.writeText(promptText);
+        alert('Prompt kopiert! Lim den inn hos AI for å generere koden.');
+    } catch (err) {
+        console.error('Kunne ikke kopiere', err);
+        alert('Klarte ikke å kopiere automatisk. Kopier manuelt fra teksten under.');
     }
 });
 </script>

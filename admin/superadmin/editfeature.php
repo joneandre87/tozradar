@@ -231,64 +231,47 @@ ob_end_flush();
         </div>
 
         <div class="settings-card" style="background: var(--dark-surface); padding: 2rem; border-radius: 12px;">
-            <form method="POST" id="editForm">
-                <div class="step" data-step="1">
-                    <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Steg 1: Grunninfo</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Oppdater tittel og beskrivelse før du limer inn ny kodepakke.</p>
-                    <div class="form-group">
-                        <label for="title">Navn på feature *</label>
-                        <input type="text" id="title" name="title" class="form-control" required
-                               value="<?php echo htmlspecialchars($feature['title']); ?>">
-                        <small style="color: #888;">Tittelen kan endres uten å påvirke eksisterende slug eller URL.</small>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="description">Kort beskrivelse</label>
-                        <textarea id="description" name="description" class="form-control" rows="3"><?php echo htmlspecialchars($feature['description']); ?></textarea>
-                    </div>
-
-                    <div class="btn-group" style="justify-content: flex-end;">
-                        <button type="button" class="btn btn-primary" id="toStep2">Neste: kode</button>
-                    </div>
+            <form method="POST">
+                <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Grunninfo</h3>
+                <div class="form-group">
+                    <label for="title">Navn på feature *</label>
+                    <input type="text" id="title" name="title" class="form-control" required
+                           value="<?php echo htmlspecialchars($feature['title']); ?>">
+                    <small style="color: #888;">Tittelen kan endres uten å påvirke eksisterende slug eller URL.</small>
                 </div>
 
-                <div class="step" data-step="2" style="display:none;">
-                    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
-                        <h3 style="margin: 0;">Steg 2: Frontend + backend + SQL i samme felt</h3>
-                        <button type="button" id="copyPrompt" class="btn btn-secondary" style="background:#ff0000; border: 1px solid #ff4d4d;">
-                            Trykk her for å kopiere melding du kan sende til AI
-                        </button>
-                    </div>
-                    <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
-                        Lim inn alt i ett felt med markørene <code>FRONTEND START/END</code>, <code>BACKEND START/END</code> og <code>SQL START/END</code>.
-                        Be AI om komplett, profesjonell kode (HTML, scripts og styles) som fungerer direkte. Dersom funksjonen trenger API-nøkler eller ekstra info skal AI spørre.
-                        Husk å bruke slug-koblinger hvis funksjonen lenker til andre features/tillegg slik databasen vår forventer.
-                    </p>
+                <div class="form-group">
+                    <label for="description">Kort beskrivelse</label>
+                    <textarea id="description" name="description" class="form-control" rows="3"><?php echo htmlspecialchars($feature['description']); ?></textarea>
+                </div>
 
-                    <div class="debug-box">
-                        <strong>Tips til AI:</strong>
-                        <ul>
-                            <li>Offentlig visning av feature skjer på <code>https://dittdomene/feature.php?slug=<?php echo htmlspecialchars($feature['slug']); ?></code>.</li>
-                            <li>Adminsider/innstillinger vises på <code>https://dittdomene/feature_backend.php?slug=<?php echo htmlspecialchars($feature['slug']); ?></code>.</li>
-                            <li>Andre features knyttes sammen via feltet <code>slug</code> i databasen (tabell <code>features</code> har bl.a. feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).</li>
-                            <li>Backend må bruke <code>$pdo</code> og <code>$_SESSION['user_id']</code> der det trengs.</li>
-                            <li>AI skal spørre om API-nøkler eller annen konfig hvis noe mangler.</li>
-                            <li>Koden skal være produksjonsklar, responsiv og inneholde alt av HTML, CSS og JS i én pakke.</li>
-                        </ul>
-                    </div>
+                <hr style="border-color: var(--border-color); margin: 2rem 0;">
 
-                    <div class="form-group">
-                        <label for="feature_package">Samlet kodeblokk</label>
-                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"><?php echo htmlspecialchars($featurePackageValue); ?></textarea>
-                        <small style="color: #ffaa00;">⚠️ SQL-delen kjøres når du lagrer. Sørg for at den er trygg.</small>
-                    </div>
+                <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <h3 style="margin: 0;">Frontend + backend + SQL i samme felt</h3>
+                    <button type="button" id="copyPrompt" class="btn btn-secondary" style="background:#ff0000; border: 1px solid #ff4d4d;">
+                        Trykk her for å kopiere melding du kan sende til AI
+                    </button>
+                </div>
+                <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
+                    Lim inn alt i ett felt med markørene <code>FRONTEND START/END</code>, <code>BACKEND START/END</code> og <code>SQL START/END</code>.
+                    Be AI om komplett, profesjonell kode (HTML, scripts og styles) som fungerer direkte. Dersom funksjonen trenger API-nøkler eller ekstra info skal AI spørre. 
+                    Husk å bruke slug-koblinger hvis funksjonen lenker til andre features/tillegg slik databasen vår forventer.
+                </p>
 
-                    <div class="btn-group" style="justify-content: space-between;">
-                        <button type="button" class="btn-secondary" id="backToStep1">← Tilbake</button>
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> Lagre endringer
-                        </button>
-                    </div>
+                <div class="form-group">
+                    <label for="feature_package">Samlet kodeblokk</label>
+                    <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"><?php echo htmlspecialchars($featurePackageValue); ?></textarea>
+                    <small style="color: #ffaa00;">⚠️ SQL-delen kjøres når du lagrer. Sørg for at den er trygg.</small>
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i> Lagre endringer
+                    </button>
+                    <a href="/admin/superadmin/features.php" class="btn-secondary">
+                        <i class="fas fa-times"></i> Avbryt
+                    </a>
                 </div>
             </form>
         </div>
@@ -296,63 +279,31 @@ ob_end_flush();
 </main>
 
 <script>
-const steps = document.querySelectorAll('.step');
-const toStep2Btn = document.getElementById('toStep2');
-const backToStep1Btn = document.getElementById('backToStep1');
-
-function showStep(stepNumber) {
-    steps.forEach(step => {
-        step.style.display = step.getAttribute('data-step') === String(stepNumber) ? 'block' : 'none';
-    });
-}
-
-toStep2Btn.addEventListener('click', () => {
-    const form = document.getElementById('editForm');
-    if (!form.reportValidity()) return;
-    showStep(2);
-});
-
-backToStep1Btn.addEventListener('click', () => showStep(1));
-
-const startStep = '<?php echo ($messageType === "success") ? "1" : ($_SERVER["REQUEST_METHOD"] === "POST" ? "2" : "1"); ?>';
-showStep(startStep);
+console.log('Edit feature page loaded');
+console.log('Feature ID:', <?php echo $featureId; ?>);
+console.log('Feature Slug:', '<?php echo $feature['slug']; ?>');
 
 document.getElementById('copyPrompt').addEventListener('click', async () => {
-    const title = document.getElementById('title').value.trim();
-    const description = document.getElementById('description').value.trim();
-    const slug = '<?php echo htmlspecialchars($feature['slug']); ?>';
-
     const promptText = `Du er en utvikler som skal levere én komplett kodeblokk for en eksisterende feature til TozRadar.
 
-Feature-navn: ${title || '[mangler tittel]'}
-Beskrivelse: ${description || '[mangler beskrivelse]'}
-Slug (fast): ${slug}
-
-Slik fungerer systemet:
-- Offentlig side: https://dittdomene/feature.php?slug=${slug}
-- Admin/innstillinger: https://dittdomene/feature_backend.php?slug=${slug}
-- Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
-- Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
-
-Lever ALT i samme svar i formatet:
+Lever ALT i samme svar og bruk denne strukturen:
 FRONTEND START
-[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett]
+[fullstendig HTML med style + script som fungerer alene i vårt oppsett]
 FRONTEND END
 
 BACKEND START
-[HTML/PHP for admin- og innstillingspanel som bruker eksisterende slug og $pdo]
+[HTML/PHP for admin- og innstillingspanel som bruker $pdo og $_SESSION['user_id'] der det trengs]
 BACKEND END
 
 SQL START
-[SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB, legg til user_id, slug-felter og relasjoner til andre features via slug]
+[SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB og legg til user_id, slug-felter og relasjoner til andre features via slug]
 SQL END
 
 Krav:
 - Koden må være profesjonell, responsiv og ferdig til bruk uten ekstra filer.
 - Hvis funksjonen trenger API-nøkler eller annen konfigurasjon må du spørre meg om det.
-- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
-- Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
-- Gi klare instruksjoner dersom jeg må fylle inn nøkler eller miljøvariabler før det fungerer.`;
+- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør.
+- Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.`;
 
     try {
         await navigator.clipboard.writeText(promptText);
