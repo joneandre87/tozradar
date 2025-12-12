@@ -1,0 +1,2 @@
+[01-Dec-2025 02:17:36 UTC] PHP Warning:  require_once(../../config.php): failed to open stream: No such file or directory in /home1/tozradar/public_html/test_add.php on line 3
+[01-Dec-2025 02:17:36 UTC] PHP Fatal error:  require_once(): Failed opening required '../../config.php' (include_path='.:/opt/cpanel/ea-php74/root/usr/share/pear') in /home1/tozradar/public_html/test_add.php on line 3
