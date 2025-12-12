@@ -7,13 +7,10 @@ $messageType = '';
 
 // Process form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $message .= "POST received! ";
 
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
-    $frontendCode = $_POST['frontend_code'] ?? '';
-    $backendCode = $_POST['backend_code'] ?? '';
-    $sqlCode = trim($_POST['sql_code'] ?? '');
+    $featurePackage = $_POST['feature_package'] ?? '';
 
     if (empty($title)) {
         $message = "Error: Title is required!";
@@ -31,17 +28,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message = "Error: A feature with this title already exists!";
                 $messageType = 'error';
             } else {
+                $parsed = [
+                    'frontend' => '',
+                    'backend' => '',
+                    'sql' => ''
+                ];
+
+                $patterns = [
+                    'frontend' => '/FRONTEND START(.*?)FRONTEND END/si',
+                    'backend'  => '/BACKEND START(.*?)BACKEND END/si',
+                    'sql'      => '/SQL START(.*?)SQL END/si'
+                ];
+
+                foreach ($patterns as $key => $pattern) {
+                    if (preg_match($pattern, $featurePackage, $matches)) {
+                        $parsed[$key] = trim($matches[1]);
+                    }
+                }
+
+                if (empty($parsed['frontend']) && empty($parsed['backend']) && empty($parsed['sql'])) {
+                    $parsed['frontend'] = trim($featurePackage);
+                }
+
                 // Insert into database
                 $stmt = $pdo->prepare("INSERT INTO features (title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, 1)");
-                $result = $stmt->execute([$title, $slug, $description, $frontendCode, $backendCode, $sqlCode, $_SESSION['user_id']]);
+                $result = $stmt->execute([$title, $slug, $description, $parsed['frontend'], $parsed['backend'], $parsed['sql'], $_SESSION['user_id']]);
 
                 if ($result) {
                     $featureId = $pdo->lastInsertId();
 
                     // Execute SQL if provided
-                    if (!empty($sqlCode)) {
+                    if (!empty($parsed['sql'])) {
                         try {
-                            $statements = array_filter(array_map('trim', explode(';', $sqlCode)));
+                            $statements = array_filter(array_map('trim', explode(';', $parsed['sql'])));
                             foreach ($statements as $sql) {
                                 if (!empty($sql)) {
                                     $pdo->exec($sql);
@@ -54,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $message = "SUCCESS! Feature created: <a href='/feature.php?slug=$slug' style='color:#00ff88;'>View Feature</a>";
-                    if (!empty($backendCode)) {
+                    if (!empty($parsed['backend'])) {
                         $message .= " | <a href='/feature_backend.php?slug=$slug' style='color:#ffaa00;'>Settings Panel</a>";
                     }
                     $messageType = 'success';
@@ -105,7 +124,7 @@ include '../../header.php';
 <main class="main-content">
     <div class="container">
         <h1 class="page-title">Add New Feature</h1>
-        <p class="page-subtitle">Create a new feature with frontend, backend, and database integration</p>
+        <p class="page-subtitle">Opprett en ny funksjon ved å lime inn én komplett pakke fra AI</p>
 
         <?php if ($message): ?>
         <div class="<?php echo $messageType === 'error' ? 'error-box' : ($messageType === 'success' ? 'success-box' : 'debug-box'); ?>">
@@ -115,62 +134,64 @@ include '../../header.php';
 
         <div class="settings-card" style="background: var(--dark-surface); padding: 2rem; border-radius: 12px;">
             <form method="POST" id="simpleForm">
-                <h3>Step 1: Title & Description</h3>
-                <div class="form-group">
-                    <label for="title">Feature Title *</label>
-                    <input type="text" id="title" name="title" class="form-control" required 
-                           value="<?php echo htmlspecialchars($_POST['title'] ?? ''); ?>" 
-                           placeholder="e.g., Bluetooth Scanner">
+                <div class="step" data-step="1">
+                    <h3>Steg 1: Grunninfo</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Start med navn og beskrivelse før du går videre til koden.</p>
+                    <div class="form-group">
+                        <label for="title">Navn på feature *</label>
+                        <input type="text" id="title" name="title" class="form-control" required
+                               value="<?php echo htmlspecialchars($_POST['title'] ?? ''); ?>"
+                               placeholder="f.eks. Bluetooth Scanner">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Kort beskrivelse</label>
+                        <textarea id="description" name="description" class="form-control" rows="3"
+                                  placeholder="Hva gjør denne funksjonen?"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
+                    </div>
+
+                    <div class="btn-group" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-primary btn-large" id="toStep2">Neste: kode</button>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="3" 
-                              placeholder="What does this feature do?"><?php echo htmlspecialchars($_POST['description'] ?? ''); ?></textarea>
-                </div>
-
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
-
-                <h3>Step 2: Frontend Code</h3>
-                <div class="form-group">
-                    <label for="frontend_code">Frontend HTML/PHP</label>
-                    <textarea id="frontend_code" name="frontend_code" class="form-control code-editor" rows="10" 
-                              placeholder="<h2>My Feature</h2><p>Content here</p>"><?php echo htmlspecialchars($_POST['frontend_code'] ?? ''); ?></textarea>
-                    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                        Ask AI to give you frontend HTML/PHP code with the functionality and user interface for your feature. Request code WITHOUT PHP opening tags, header, or footer - just the main content including HTML, CSS styles, and JavaScript. The code should be responsive.
+                <div class="step" data-step="2" style="display:none;">
+                    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <h3 style="margin: 0;">Steg 2: Lim inn alt i ett felt</h3>
+                        <button type="button" id="copyPrompt" class="btn btn-secondary" style="background:#ff0000; border: 1px solid #ff4d4d;">
+                            Trykk her for å kopiere melding du kan sende til AI
+                        </button>
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
+                        Lim inn <strong>én komplett kodeblokk</strong> med frontend, backend og SQL i samme felt. All detaljert veiledning ligger i meldingen som kopieres til AI.
                     </p>
+
+                    <div class="form-group">
+                        <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
+                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
+                                  placeholder="FRONTEND START
+...html, css, js for brukergrensesnitt...
+FRONTEND END
+
+BACKEND START
+...html/php for admin-innstillinger...
+BACKEND END
+
+SQL START
+CREATE TABLE ...
+SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></textarea>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                            Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
+                        </p>
+                    </div>
+
+                    <div class="btn-group" style="justify-content: space-between;">
+                        <button type="button" class="btn btn-secondary" id="backToStep1">← Tilbake</button>
+                        <button type="submit" class="btn btn-primary btn-large btn-glow">
+                            <i class="fas fa-plus"></i> Opprett funksjon
+                        </button>
+                    </div>
                 </div>
-
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
-
-                <h3>Step 3: Backend Code (Optional)</h3>
-                <div class="form-group">
-                    <label for="backend_code">Backend HTML/PHP</label>
-                    <textarea id="backend_code" name="backend_code" class="form-control code-editor" rows="8" 
-                              placeholder="<h3>Settings</h3>"><?php echo htmlspecialchars($_POST['backend_code'] ?? ''); ?></textarea>
-                    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                        Ask AI to give you backend HTML/PHP code for the feature's settings or admin panel. Request code WITHOUT PHP opening tags, header, or footer - just the main content. This should include configuration forms, statistics displays, and data management. Use $pdo for database operations and $_SESSION['user_id'] for the current user. Backend content will be rendered through the shared settings page for each feature.
-                    </p>
-                </div>
-
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
-
-                <h3>Step 4: SQL Code (Optional)</h3>
-                <div class="form-group">
-                    <label for="sql_code">SQL Statements</label>
-                    <textarea id="sql_code" name="sql_code" class="form-control code-editor" rows="6" 
-                              placeholder="CREATE TABLE..."><?php echo htmlspecialchars($_POST['sql_code'] ?? ''); ?></textarea>
-                    <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                        Ask AI to give you SQL CREATE TABLE statements for the database tables needed to make this feature work. Use MySQL syntax with the database name 'tozradar_db'. Include user_id columns that reference the users table, proper indexes, and InnoDB engine.
-                    </p>
-                </div>
-
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
-
-                <h3>Step 5: Create</h3>
-                <button type="submit" class="btn btn-primary btn-large btn-glow">
-                    <i class="fas fa-plus"></i> Create Feature Now
-                </button>
             </form>
         </div>
 
@@ -181,13 +202,80 @@ include '../../header.php';
 </main>
 
 <script>
-document.getElementById('simpleForm').addEventListener('submit', function(e) {
-    console.log('Form submitting...');
-    console.log('Title:', document.getElementById('title').value);
-    console.log('Form action:', this.action);
-    console.log('Form method:', this.method);
+const steps = document.querySelectorAll('.step');
+const toStep2Btn = document.getElementById('toStep2');
+const backToStep1Btn = document.getElementById('backToStep1');
+const form = document.getElementById('simpleForm');
+
+const slugify = (text) => text.toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-');
+
+function showStep(stepNumber) {
+    steps.forEach(step => {
+        step.style.display = step.getAttribute('data-step') === String(stepNumber) ? 'block' : 'none';
+    });
+}
+
+toStep2Btn.addEventListener('click', () => {
+    if (!form.reportValidity()) return;
+    showStep(2);
 });
-console.log('Feature creation form loaded');
+
+backToStep1Btn.addEventListener('click', () => showStep(1));
+
+const startStep = '<?php echo ($messageType === "success") ? "1" : ($_SERVER["REQUEST_METHOD"] === "POST" ? "2" : "1"); ?>';
+showStep(startStep);
+
+document.getElementById('copyPrompt').addEventListener('click', async () => {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const slug = slugify(title || 'din-feature');
+
+    const promptText = `Du er en utvikler som skal levere én komplett kodeblokk for en ny feature til TozRadar.
+
+Feature-navn: ${title || '[mangler tittel]'}
+Beskrivelse: ${description || '[mangler beskrivelse]'}
+Slug (brukes i URL og koblinger): ${slug}
+
+Slik fungerer systemet:
+- Offentlig side: https://dittdomene/feature.php?slug=${slug}
+- Admin/innstillinger: https://dittdomene/feature_backend.php?slug=${slug}
+- Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
+- Slug brukes som primary/foreign key i andre tabeller (f.eks. feltet feature_slug eller related_slug som refererer til features.slug).
+- Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
+- Når koden sendes inn lagres frontend_code, backend_code og sql_code i tabellen "features" og SQL-delen kjøres under lagringen.
+
+Lever ALT i samme svar i formatet (én eneste kodeblokk med disse markørene):
+FRONTEND START
+[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett, er innholdsrikt og lenker til /feature.php?slug=${slug} eller andre slug-baserte funksjoner]
+FRONTEND END
+
+BACKEND START
+[HTML/PHP for admin- og innstillingspanel som bruker eksisterende slug, $pdo og lagrer trygt. Sørg for at UI-et er fyldig, forklar funksjonen og gir maksimal nytteverdi.]
+BACKEND END
+
+SQL START
+[SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB, legg til user_id, slug-felter og relasjoner til andre features via slug]
+SQL END
+
+Krav og forventninger:
+ - Koden må være profesjonell, responsiv, innholdsrik og ferdig til bruk uten ekstra filer.
+ - Beskriv hvilke miljøvariabler/API-nøkler som trengs før det fungerer. Stopp og spør om jeg har dem før du viser kode, forklar hvor kritiske de er, og om du kan levere en variant uten dem. Ikke bruk placeholders.
+ - Ikke lever kode dersom informasjon eller nøkler mangler; be om alt som trengs først.
+- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
+- Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
+- Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.
+- Svar med én eneste kodeblokk (en ```-blokk) som inneholder seksjonene FRONTEND/BACKEND/SQL uten ekstra kodeblokker.`;
+
+    try {
+        await navigator.clipboard.writeText(promptText);
+        alert('Prompt kopiert! Lim den inn hos AI for å generere koden.');
+    } catch (err) {
+        console.error('Kunne ikke kopiere', err);
+        alert('Klarte ikke å kopiere automatisk. Kopier manuelt fra teksten over.');
+    }
+});
 </script>
 
 <?php include '../../footer.php'; ?>

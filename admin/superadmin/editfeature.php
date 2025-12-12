@@ -21,9 +21,7 @@ if ($featureId === 0) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $title = trim($_POST['title'] ?? '');
     $description = trim($_POST['description'] ?? '');
-    $frontendCode = $_POST['frontend_code'] ?? '';
-    $backendCode = $_POST['backend_code'] ?? '';
-    $sqlCode = trim($_POST['sql_code'] ?? '');
+    $featurePackage = $_POST['feature_package'] ?? '';
 
     if (empty($title)) {
         $message = "Error: Title is required!";
@@ -41,15 +39,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $slug = $currentFeature['slug'];
                 
+                $parsed = [
+                    'frontend' => '',
+                    'backend' => '',
+                    'sql' => ''
+                ];
+
+                $patterns = [
+                    'frontend' => '/FRONTEND START(.*?)FRONTEND END/si',
+                    'backend'  => '/BACKEND START(.*?)BACKEND END/si',
+                    'sql'      => '/SQL START(.*?)SQL END/si'
+                ];
+
+                foreach ($patterns as $key => $pattern) {
+                    if (preg_match($pattern, $featurePackage, $matches)) {
+                        $parsed[$key] = trim($matches[1]);
+                    }
+                }
+
+                if (empty($parsed['frontend']) && empty($parsed['backend']) && empty($parsed['sql'])) {
+                    $parsed['frontend'] = trim($featurePackage);
+                }
+
                 // Update database
                 $stmt = $pdo->prepare("UPDATE features SET title = ?, description = ?, frontend_code = ?, backend_code = ?, sql_code = ? WHERE id = ?");
-                $result = $stmt->execute([$title, $description, $frontendCode, $backendCode, $sqlCode, $featureId]);
+                $result = $stmt->execute([$title, $description, $parsed['frontend'], $parsed['backend'], $parsed['sql'], $featureId]);
 
                 if ($result) {
                     // Execute SQL if provided and changed
-                    if (!empty($sqlCode)) {
+                    if (!empty($parsed['sql'])) {
                         try {
-                            $statements = array_filter(array_map('trim', explode(';', $sqlCode)));
+                            $statements = array_filter(array_map('trim', explode(';', $parsed['sql'])));
                             foreach ($statements as $sql) {
                                 if (!empty($sql)) {
                                     $pdo->exec($sql);
@@ -62,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     $message = "✓ Feature updated successfully! <a href='/feature.php?slug=$slug' style='color:#00ff88;'>View Feature</a>";
-                    if (!empty($backendCode)) {
+                    if (!empty($parsed['backend'])) {
                         $message .= " | <a href='/feature_backend.php?slug=$slug' style='color:#ffaa00;'>View Settings</a>";
                     }
                     $messageType = 'success';
@@ -87,6 +107,11 @@ if (!$feature) {
     header("Location: /admin/superadmin/features.php");
     exit;
 }
+
+$featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
+    ($feature['frontend_code'] ?? '') . "\nFRONTEND END\n\nBACKEND START\n" .
+    ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
+    ($feature['sql_code'] ?? '') . "\nSQL END";
 
 $pageTitle = "Edit Feature";
 include '../../header.php';
@@ -188,7 +213,7 @@ ob_end_flush();
 <main class="main-content">
     <div class="container">
         <h1 class="page-title"><i class="fas fa-edit"></i> Edit Feature</h1>
-        <p class="page-subtitle">Modify frontend and backend code for this feature</p>
+        <p class="page-subtitle">Gjør endringer med én samlet kodeblokk for frontend, backend og database</p>
 
         <?php if ($message): ?>
         <div class="message <?php echo $messageType; ?>">
@@ -206,54 +231,50 @@ ob_end_flush();
         </div>
 
         <div class="settings-card" style="background: var(--dark-surface); padding: 2rem; border-radius: 12px;">
-            <form method="POST">
-                <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Basic Information</h3>
-                <div class="form-group">
-                    <label for="title">Feature Title *</label>
-                    <input type="text" id="title" name="title" class="form-control" required
-                           value="<?php echo htmlspecialchars($feature['title']); ?>">
-                    <small style="color: #888;">Note: Changing the title will not change the slug or saved feature URL.</small>
+            <form method="POST" id="editForm">
+                <div class="step" data-step="1">
+                    <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-info-circle"></i> Steg 1: Grunninfo</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">Oppdater tittel og beskrivelse før du limer inn ny kodepakke.</p>
+                    <div class="form-group">
+                        <label for="title">Navn på feature *</label>
+                        <input type="text" id="title" name="title" class="form-control" required
+                               value="<?php echo htmlspecialchars($feature['title']); ?>">
+                        <small style="color: #888;">Tittelen kan endres uten å påvirke eksisterende slug eller URL.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Kort beskrivelse</label>
+                        <textarea id="description" name="description" class="form-control" rows="3"><?php echo htmlspecialchars($feature['description']); ?></textarea>
+                    </div>
+
+                    <div class="btn-group" style="justify-content: flex-end;">
+                        <button type="button" class="btn btn-primary" id="toStep2">Neste: kode</button>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="description">Description</label>
-                    <textarea id="description" name="description" class="form-control" rows="3"><?php echo htmlspecialchars($feature['description']); ?></textarea>
-                </div>
+                <div class="step" data-step="2" style="display:none;">
+                    <div style="display: flex; justify-content: space-between; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                        <h3 style="margin: 0;">Steg 2: Frontend + backend + SQL i samme felt</h3>
+                        <button type="button" id="copyPrompt" class="btn btn-secondary" style="background:#ff0000; border: 1px solid #ff4d4d;">
+                            Trykk her for å kopiere melding du kan sende til AI
+                        </button>
+                    </div>
+                    <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
+                        Lim inn <strong>én komplett kodeblokk</strong> med FRONTEND/BACKEND/SQL i samme felt. Alt AI trenger står i meldingen du kopierer.
+                    </p>
 
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
+                    <div class="form-group">
+                        <label for="feature_package">Samlet kodeblokk</label>
+                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"><?php echo htmlspecialchars($featurePackageValue); ?></textarea>
+                        <small style="color: #ffaa00;">⚠️ SQL-delen kjøres når du lagrer. Sørg for at den er trygg.</small>
+                    </div>
 
-                <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-desktop"></i> Frontend Code</h3>
-                <div class="form-group">
-                    <label for="frontend_code">Frontend HTML/PHP</label>
-                    <textarea id="frontend_code" name="frontend_code" class="form-control code-editor" rows="20"><?php echo htmlspecialchars($feature['frontend_code']); ?></textarea>
-                    <small style="color: #888;">This is what users see when they access the feature.</small>
-                </div>
-
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
-
-                <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-cogs"></i> Backend Code (Optional)</h3>
-                <div class="form-group">
-                    <label for="backend_code">Backend HTML/PHP</label>
-                    <textarea id="backend_code" name="backend_code" class="form-control code-editor" rows="15"><?php echo htmlspecialchars($feature['backend_code']); ?></textarea>
-                    <small style="color: #888;">Settings and configuration panel for this feature.</small>
-                </div>
-
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
-
-                <h3 style="color: #ff0000; margin-bottom: 1rem;"><i class="fas fa-database"></i> SQL Code (Optional)</h3>
-                <div class="form-group">
-                    <label for="sql_code">SQL Statements</label>
-                    <textarea id="sql_code" name="sql_code" class="form-control code-editor" rows="10"><?php echo htmlspecialchars($feature['sql_code']); ?></textarea>
-                    <small style="color: #ffaa00;">⚠️ Warning: SQL will be executed when you save. Be careful!</small>
-                </div>
-
-                <div class="btn-group">
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-save"></i> Save Changes
-                    </button>
-                    <a href="/admin/superadmin/features.php" class="btn-secondary">
-                        <i class="fas fa-times"></i> Cancel
-                    </a>
+                    <div class="btn-group" style="justify-content: space-between;">
+                        <button type="button" class="btn-secondary" id="backToStep1">← Tilbake</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Lagre endringer
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
@@ -261,9 +282,76 @@ ob_end_flush();
 </main>
 
 <script>
-console.log('Edit feature page loaded');
-console.log('Feature ID:', <?php echo $featureId; ?>);
-console.log('Feature Slug:', '<?php echo $feature['slug']; ?>');
+const steps = document.querySelectorAll('.step');
+const toStep2Btn = document.getElementById('toStep2');
+const backToStep1Btn = document.getElementById('backToStep1');
+
+function showStep(stepNumber) {
+    steps.forEach(step => {
+        step.style.display = step.getAttribute('data-step') === String(stepNumber) ? 'block' : 'none';
+    });
+}
+
+toStep2Btn.addEventListener('click', () => {
+    const form = document.getElementById('editForm');
+    if (!form.reportValidity()) return;
+    showStep(2);
+});
+
+backToStep1Btn.addEventListener('click', () => showStep(1));
+
+const startStep = '<?php echo ($messageType === "success") ? "1" : ($_SERVER["REQUEST_METHOD"] === "POST" ? "2" : "1"); ?>';
+showStep(startStep);
+
+document.getElementById('copyPrompt').addEventListener('click', async () => {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const slug = '<?php echo htmlspecialchars($feature['slug']); ?>';
+
+    const promptText = `Du er en utvikler som skal levere én komplett kodeblokk for en eksisterende feature til TozRadar.
+
+Feature-navn: ${title || '[mangler tittel]'}
+Beskrivelse: ${description || '[mangler beskrivelse]'}
+Slug (fast): ${slug}
+
+Slik fungerer systemet:
+- Offentlig side: https://dittdomene/feature.php?slug=${slug}
+- Admin/innstillinger: https://dittdomene/feature_backend.php?slug=${slug}
+- Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
+- Slug brukes som primary/foreign key i andre tabeller (f.eks. feltet feature_slug eller related_slug som refererer til features.slug).
+- Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
+- Når koden lagres plasseres frontend_code, backend_code og sql_code i tabellen "features" og SQL-delen kjøres under lagringen.
+
+Lever ALT i samme svar i formatet (én eneste kodeblokk med disse markørene):
+FRONTEND START
+[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett, er innholdsrikt og bruker slug-baserte lenker]
+FRONTEND END
+
+BACKEND START
+[HTML/PHP for admin- og innstillingspanel som bruker eksisterende slug, $pdo og lagrer trygt. UI-et skal være fyldig og beskrive funksjonen tydelig.]
+BACKEND END
+
+SQL START
+[SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB, legg til user_id, slug-felter og relasjoner til andre features via slug]
+SQL END
+
+Krav og forventninger:
+ - Koden må være profesjonell, responsiv, innholdsrik og ferdig til bruk uten ekstra filer.
+ - Beskriv hvilke miljøvariabler/API-nøkler som trengs før det fungerer. Stopp og spør om jeg har dem før du viser kode, forklar hvor kritiske de er, og om du kan levere en variant uten dem. Ikke bruk placeholders.
+ - Ikke lever kode dersom informasjon eller nøkler mangler; be om alt som trengs først.
+- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
+- Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
+- Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.
+- Svar med én eneste kodeblokk (en ```-blokk) som inneholder seksjonene FRONTEND/BACKEND/SQL uten ekstra kodeblokker.`;
+
+    try {
+        await navigator.clipboard.writeText(promptText);
+        alert('Prompt kopiert! Lim den inn hos AI for å generere koden.');
+    } catch (err) {
+        console.error('Kunne ikke kopiere', err);
+        alert('Klarte ikke å kopiere automatisk. Kopier manuelt fra teksten over.');
+    }
+});
 </script>
 
 <?php include '../../footer.php'; ?>
