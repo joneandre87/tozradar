@@ -168,7 +168,7 @@ include '../../header.php';
                         Dersom funksjonen trenger API-nøkler eller ekstra info må AI be deg om det. Hvis funksjonen lenker til andre tillegg/features må den bruke vår slug-struktur slik databasen er satt opp.
                     </p>
 
-                    <div class="debug-box">
+                    <div class="debug-box" style="visibility:hidden;">
                         <strong>Hvordan systemet henger sammen:</strong>
                         <ul>
                             <li>Offentlig side: <code>https://dittdomene/feature.php?slug={slug}</code></li>
@@ -180,7 +180,7 @@ include '../../header.php';
                         </ul>
                     </div>
 
-                    <div class="debug-box">
+                    <div class="debug-box" style="visibility:hidden;">
                         <strong>Eksempel på forventet pakke og lenking:</strong>
                         <ul>
                             <li>Bruk formatet:
