@@ -182,7 +182,9 @@ SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></texta
                     </p>
                 </div>
 
-                <hr style="border-color: var(--border-color); margin: 2rem 0;">
+BACKEND START
+...html/php for admin-innstillinger...
+BACKEND END
 
                 <h3>3) Opprett</h3>
                 <button type="submit" class="btn btn-primary btn-large btn-glow">
@@ -198,11 +200,75 @@ SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></texta
 </main>
 
 <script>
-document.getElementById('simpleForm').addEventListener('submit', function(e) {
-    console.log('Form submitting...');
-    console.log('Title:', document.getElementById('title').value);
-    console.log('Form action:', this.action);
-    console.log('Form method:', this.method);
+const steps = document.querySelectorAll('.step');
+const toStep2Btn = document.getElementById('toStep2');
+const backToStep1Btn = document.getElementById('backToStep1');
+const form = document.getElementById('simpleForm');
+
+const slugify = (text) => text.toLowerCase().trim()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-');
+
+function showStep(stepNumber) {
+    steps.forEach(step => {
+        step.style.display = step.getAttribute('data-step') === String(stepNumber) ? 'block' : 'none';
+    });
+}
+
+toStep2Btn.addEventListener('click', () => {
+    if (!form.reportValidity()) return;
+    showStep(2);
+});
+
+backToStep1Btn.addEventListener('click', () => showStep(1));
+
+const startStep = '<?php echo ($messageType === "success") ? "1" : ($_SERVER["REQUEST_METHOD"] === "POST" ? "2" : "1"); ?>';
+showStep(startStep);
+
+document.getElementById('copyPrompt').addEventListener('click', async () => {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const slug = slugify(title || 'din-feature');
+
+    const promptText = `Du er en utvikler som skal levere én komplett kodeblokk for en ny feature til TozRadar.
+
+Feature-navn: ${title || '[mangler tittel]'}
+Beskrivelse: ${description || '[mangler beskrivelse]'}
+Slug (brukes i URL og koblinger): ${slug}
+
+Slik fungerer systemet:
+- Offentlig side: https://dittdomene/feature.php?slug=${slug}
+- Admin/innstillinger: https://dittdomene/feature_backend.php?slug=${slug}
+- Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
+- Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
+
+Lever ALT i samme svar i formatet:
+FRONTEND START
+[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett]
+FRONTEND END
+
+BACKEND START
+[HTML/PHP for admin- og innstillingspanel som bruker eksisterende slug og $pdo]
+BACKEND END
+
+SQL START
+[SQL for tabeller/prosedyrer. Bruk MySQL/InnoDB, legg til user_id, slug-felter og relasjoner til andre features via slug]
+SQL END
+
+Krav:
+- Koden må være profesjonell, responsiv og ferdig til bruk uten ekstra filer.
+- Hvis funksjonen trenger API-nøkler eller annen konfigurasjon må du spørre meg om det.
+- Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
+- Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
+- Gi klare instruksjoner dersom jeg må fylle inn nøkler eller miljøvariabler før det fungerer.`;
+
+    try {
+        await navigator.clipboard.writeText(promptText);
+        alert('Prompt kopiert! Lim den inn hos AI for å generere koden.');
+    } catch (err) {
+        console.error('Kunne ikke kopiere', err);
+        alert('Klarte ikke å kopiere automatisk. Kopier manuelt fra teksten over.');
+    }
 });
 console.log('Feature creation form loaded');
 
