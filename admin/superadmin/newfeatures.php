@@ -168,6 +168,39 @@ include '../../header.php';
                         Dersom funksjonen trenger API-nøkler eller ekstra info må AI be deg om det. Hvis funksjonen lenker til andre tillegg/features må den bruke vår slug-struktur slik databasen er satt opp.
                     </p>
 
+
+                    <div class="form-group">
+                        <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
+                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
+                                  placeholder="FRONTEND START
+...html, css, js for brukergrensesnitt...
+FRONTEND END
+
+BACKEND START
+...html/php for admin-innstillinger...
+BACKEND END
+
+SQL START
+CREATE TABLE ...
+SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></textarea>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
+                            Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
+                        </p>
+                    </div>
+
+                    <div class="btn-group" style="justify-content: space-between;">
+                        <button type="button" class="btn btn-secondary" id="backToStep1">← Tilbake</button>
+                        <button type="submit" class="btn btn-primary btn-large btn-glow">
+                            <i class="fas fa-plus"></i> Opprett funksjon
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="back-link">
+            <a href="/admin/superadmin/features.php">← Back to Features</a>
+        </div>
+        
             
    <div class="debug-box" style="visibility:hidden;">
                         <strong>Hvordan systemet henger sammen:</strong>
@@ -202,38 +235,6 @@ SQL END
                             <li>Slugs skal aldri regenereres; bruk den som allerede er definert fra tittelen.</li>
                         </ul>
                     </div>
-
-                    <div class="form-group">
-                        <label for="feature_package">Frontend + backend + SQL i samme blokk</label>
-                        <textarea id="feature_package" name="feature_package" class="form-control code-editor" rows="20"
-                                  placeholder="FRONTEND START
-...html, css, js for brukergrensesnitt...
-FRONTEND END
-
-BACKEND START
-...html/php for admin-innstillinger...
-BACKEND END
-
-SQL START
-CREATE TABLE ...
-SQL END"><?php echo htmlspecialchars($_POST['feature_package'] ?? ''); ?></textarea>
-                        <p style="color: var(--text-secondary); margin-top: 0.5rem; font-size: 0.9rem;">
-                            Strukturen over gjør at vi automatisk plukker ut frontend-, backend- og SQL-delen. Mangler markørene, legger vi alt som frontend. Husk å inkludere felter som refererer til <code>slug</code> der det trengs for koblinger mellom features.
-                        </p>
-                    </div>
-
-                    <div class="btn-group" style="justify-content: space-between;">
-                        <button type="button" class="btn btn-secondary" id="backToStep1">← Tilbake</button>
-                        <button type="submit" class="btn btn-primary btn-large btn-glow">
-                            <i class="fas fa-plus"></i> Opprett funksjon
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div class="back-link">
-            <a href="/admin/superadmin/features.php">← Back to Features</a>
-        </div>
     </div>
 </main>
 
