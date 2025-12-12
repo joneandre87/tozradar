@@ -113,6 +113,11 @@ $featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
     ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
     ($feature['sql_code'] ?? '') . "\nSQL END";
 
+$featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
+    ($feature['frontend_code'] ?? '') . "\nFRONTEND END\n\nBACKEND START\n" .
+    ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
+    ($feature['sql_code'] ?? '') . "\nSQL END";
+
 $pageTitle = "Edit Feature";
 include '../../header.php';
 ob_end_flush();
@@ -260,45 +265,8 @@ ob_end_flush();
                         </button>
                     </div>
                     <p style="color: var(--text-secondary); margin: 0.5rem 0 1rem; font-size: 0.95rem;">
-                        Lim inn alt i ett felt med markørene <code>FRONTEND START/END</code>, <code>BACKEND START/END</code> og <code>SQL START/END</code>.
-                        Be AI om komplett, profesjonell kode (HTML, scripts og styles) som fungerer direkte. Dersom funksjonen trenger API-nøkler eller ekstra info skal AI spørre.
-                        Husk å bruke slug-koblinger hvis funksjonen lenker til andre features/tillegg slik databasen vår forventer.
+                        Lim inn <strong>én komplett kodeblokk</strong> med FRONTEND/BACKEND/SQL i samme felt. Alt AI trenger står i meldingen du kopierer.
                     </p>
-
-                    <div class="debug-box">
-                        <strong>Hvordan systemet henger sammen:</strong>
-                        <ul>
-                            <li>Offentlig visning: <code>https://dittdomene/feature.php?slug=<?php echo htmlspecialchars($feature['slug']); ?></code></li>
-                            <li>Admin/innstillinger: <code>https://dittdomene/feature_backend.php?slug=<?php echo htmlspecialchars($feature['slug']); ?></code></li>
-                            <li>Database: tabellen <code>features</code> med feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active.</li>
-                            <li>Slug brukes som nøkkel i andre tabeller (f.eks. <code>feature_slug</code> eller <code>related_slug</code> som peker på <code>features.slug</code>).</li>
-                            <li>Backend-kode må bruke <code>$pdo</code> og <code>$_SESSION['user_id']</code> der det trengs.</li>
-                            <li>AI skal spørre om API-nøkler eller annen konfig hvis noe mangler.</li>
-                        </ul>
-                    </div>
-
-                    <div class="debug-box">
-                        <strong>Eksempel på forventet pakke og lenking:</strong>
-                        <ul>
-                            <li>Format:
-                                <pre style="white-space: pre-wrap; background:#0f0f0f; padding:10px; border-radius:6px;">
-FRONTEND START
-[full HTML med &lt;style&gt; og &lt;script&gt; som fungerer alene og bruker eksisterende slug for lenker]
-FRONTEND END
-
-BACKEND START
-[HTML/PHP for admin-innstillinger som bevarer slug og lagrer via $pdo]
-BACKEND END
-
-SQL START
-[MySQL DDL/DML. Inkluder felt som "feature_slug" eller "related_slug" som refererer til features.slug]
-SQL END
-                                </pre>
-                            </li>
-                            <li>AI må beskrive hvilke miljøvariabler/API-nøkler som trengs før koden kan kjøres.</li>
-                            <li>Slugs skal beholdes; ingen regenerering.</li>
-                        </ul>
-                    </div>
 
                     <div class="form-group">
                         <label for="feature_package">Samlet kodeblokk</label>
@@ -357,14 +325,15 @@ Slik fungerer systemet:
 - Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
 - Slug brukes som primary/foreign key i andre tabeller (f.eks. feltet feature_slug eller related_slug som refererer til features.slug).
 - Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
+- Når koden lagres plasseres frontend_code, backend_code og sql_code i tabellen "features" og SQL-delen kjøres under lagringen.
 
-Lever ALT i samme svar i formatet:
+Lever ALT i samme svar i formatet (én eneste kodeblokk med disse markørene):
 FRONTEND START
-[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett og bruker slug-baserte lenker]
+[fullstendig HTML med <style> og <script> som fungerer alene i vårt oppsett, er innholdsrikt og bruker slug-baserte lenker]
 FRONTEND END
 
 BACKEND START
-[HTML/PHP for admin- og innstillingspanel som bruker eksisterende slug, $pdo og lagrer trygt]
+[HTML/PHP for admin- og innstillingspanel som bruker eksisterende slug, $pdo og lagrer trygt. UI-et skal være fyldig og beskrive funksjonen tydelig.]
 BACKEND END
 
 SQL START
@@ -372,11 +341,13 @@ SQL START
 SQL END
 
 Krav og forventninger:
-- Koden må være profesjonell, responsiv og ferdig til bruk uten ekstra filer.
-- Beskriv hvilke miljøvariabler/API-nøkler som trengs før det fungerer, og be om manglende verdier.
+ - Koden må være profesjonell, responsiv, innholdsrik og ferdig til bruk uten ekstra filer.
+ - Beskriv hvilke miljøvariabler/API-nøkler som trengs før det fungerer. Stopp og spør om jeg har dem før du viser kode, forklar hvor kritiske de er, og om du kan levere en variant uten dem. Ikke bruk placeholders.
+ - Ikke lever kode dersom informasjon eller nøkler mangler; be om alt som trengs først.
 - Hvis funksjonen lenker til andre features/tillegg må du bruke slug slik databasen vår gjør (f.eks. foreign keys eller koblingstabeller som refererer til slug).
 - Ikke legg ved PHP header/footer, bare innholdet som skal inn i databasen.
-- Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.`;
+- Gi klare instrukser for eventuelle migrations/SQL-triggere som må kjøres.
+- Svar med én eneste kodeblokk (en ```-blokk) som inneholder seksjonene FRONTEND/BACKEND/SQL uten ekstra kodeblokker.`;
 
     try {
         await navigator.clipboard.writeText(promptText);
