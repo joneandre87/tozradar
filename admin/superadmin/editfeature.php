@@ -118,6 +118,11 @@ $featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
     ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
     ($feature['sql_code'] ?? '') . "\nSQL END";
 
+$featurePackageValue = $_POST['feature_package'] ?? "FRONTEND START\n" .
+    ($feature['frontend_code'] ?? '') . "\nFRONTEND END\n\nBACKEND START\n" .
+    ($feature['backend_code'] ?? '') . "\nBACKEND END\n\nSQL START\n" .
+    ($feature['sql_code'] ?? '') . "\nSQL END";
+
 $pageTitle = "Edit Feature";
 include '../../header.php';
 ob_end_flush();
@@ -325,7 +330,23 @@ Slik fungerer systemet:
 - Relasjoner mellom features gjøres via feltet slug i databasen (tabell "features" har feltene title, slug, description, frontend_code, backend_code, sql_code, created_by, is_active).
 - Slug brukes som primary/foreign key i andre tabeller (f.eks. feltet feature_slug eller related_slug som refererer til features.slug).
 - Backend-kode skal bruke $pdo for databasekall og $_SESSION['user_id'] der det trengs.
-- Når koden lagres plasseres frontend_code, backend_code og sql_code i tabellen "features" og SQL-delen kjøres under lagringen.
+- Når koden lagres limer vi inn én samlet blokk i et tekstfelt, plasserer frontend_code, backend_code og sql_code i tabellen "features" og kjører SQL-delen direkte under lagringen.
+- Du må skrive hvilke tabeller SQL-delen oppretter/oppdaterer og hvordan frontend/backend bruker dem.
+
+Slik skal svaret ditt se ut (ALT i ÉN eneste kodeblokk – ikke flere separate blokker):
+```
+FRONTEND START
+[fullstendig HTML/CSS/JS for offentlig side, rike beskrivelser av funksjonen, klare knapper/lenker, bruker slug=${slug} i lenker]
+FRONTEND END
+
+BACKEND START
+[HTML/PHP for adminpanel som lagrer med $pdo og bruker eksisterende slug=${slug}; inkluderer fyldig UI med forklaringer]
+BACKEND END
+
+SQL START
+[MySQL-skript for nødvendige tabeller/relasjoner, alltid med slug- og user_id-felter samt koblinger til andre features]
+SQL END
+```
 
 Lever ALT i samme svar i formatet (én eneste kodeblokk med disse markørene):
 FRONTEND START
