@@ -1,0 +1,9 @@
+[01-Dec-2025 02:42:04 UTC] PHP Parse error:  syntax error, unexpected 'Toggle' (T_STRING), expecting ';' or ',' in /home1/tozradar/public_html/admin/superadmin/test_toggle_delete.php on line 125
+[01-Dec-2025 02:42:07 UTC] PHP Parse error:  syntax error, unexpected 'Toggle' (T_STRING), expecting ';' or ',' in /home1/tozradar/public_html/admin/superadmin/test_toggle_delete.php on line 125
+[01-Dec-2025 02:42:09 UTC] PHP Parse error:  syntax error, unexpected 'Toggle' (T_STRING), expecting ';' or ',' in /home1/tozradar/public_html/admin/superadmin/test_toggle_delete.php on line 125
+[01-Dec-2025 02:43:05 UTC] PHP Parse error:  syntax error, unexpected 'Toggle' (T_STRING), expecting ';' or ',' in /home1/tozradar/public_html/admin/superadmin/test_toggle_delete.php on line 125
+[01-Dec-2025 02:43:53 UTC] PHP Parse error:  syntax error, unexpected 'Toggle' (T_STRING), expecting ';' or ',' in /home1/tozradar/public_html/admin/superadmin/test_toggle_delete.php on line 125
+[01-Dec-2025 02:45:17 UTC] PHP Parse error:  syntax error, unexpected 'Toggle' (T_STRING), expecting ';' or ',' in /home1/tozradar/public_html/admin/superadmin/test_toggle_delete.php on line 125
+[01-Dec-2025 02:53:31 UTC] PHP Warning:  count(): Parameter must be an array or an object that implements Countable in /home1/tozradar/public_html/admin/superadmin/features.php on line 150
+[01-Dec-2025 02:53:31 UTC] PHP Warning:  count(): Parameter must be an array or an object that implements Countable in /home1/tozradar/public_html/admin/superadmin/features.php on line 152
+[01-Dec-2025 02:53:31 UTC] PHP Warning:  count(): Parameter must be an array or an object that implements Countable in /home1/tozradar/public_html/admin/superadmin/features.php on line 209
