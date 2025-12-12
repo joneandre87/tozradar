@@ -1,0 +1,15 @@
+# Enable access to all PHP files
+<FilesMatch "\.php$">
+    Require all granted
+</FilesMatch>
+
+# Disable directory listing
+Options -Indexes
+
+# Enable PHP
+php_flag display_errors Off
+php_value max_execution_time 300
+
+# Allow access from all
+Order allow,deny
+Allow from all
