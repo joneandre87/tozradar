@@ -34,6 +34,10 @@ jobs:
           flutter-version: '3.44.4'
           cache: true
 
+      - name: Create .env from template
+        working-directory: toza_mobile
+        run: cp .env.example .env
+
       - name: Install dependencies
         working-directory: toza_mobile
         run: flutter pub get

@@ -1,0 +1,37 @@
+name: toza_mobile
+description: "Tøza OS mobile client — talks to the tozastarter backend (AIKernel, MemoryKernel, Bearer auth)."
+publish_to: 'none'
+
+# 0.1.0 per OPERATION PHOENIX: first release candidate.
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+
+# Every dependency below is imported by code in lib/ — nothing speculative.
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # State management (ChatService/AuthKernel are ChangeNotifiers wired via MultiProvider in main.dart)
+  provider: ^6.1.2
+  # HTTP transport for ApiClient (single gateway to the tozastarter REST API)
+  http: ^1.2.2
+  # Loads .env (TOZA_API_BASE) without compiling the backend URL into the binary
+  flutter_dotenv: ^6.0.0
+  # Local SQLite cache for MemoryService (offline-first memory, syncs to MySQL)
+  sqflite: ^2.4.1
+  # join() for the SQLite database path in MemoryService.init()
+  path: ^1.9.0
+  # Encrypted at-rest storage for the session token (TokenStore) — never plain prefs
+  flutter_secure_storage: ^9.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
