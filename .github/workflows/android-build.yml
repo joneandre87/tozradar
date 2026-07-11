@@ -4,49 +4,51 @@ on:
   push:
     paths:
       - 'toza_mobile/**'
+      - '.github/workflows/android-build.yml'
   pull_request:
     paths:
       - 'toza_mobile/**'
+      - '.github/workflows/android-build.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.44.4'
-
-      - name: Install Android SDK components
-        run: |
-          yes | sdkmanager --install "platform-tools" "cmdline-tools;latest" "platforms;android-36" "build-tools;36.0.0"
-
-      - name: Accept Android SDK licenses
-        run: |
-          yes | sdkmanager --licenses || true
+          cache: true
 
       - name: Install dependencies
-        run: |
-          cd toza_mobile
-          flutter pub get
+        working-directory: toza_mobile
+        run: flutter pub get
 
       - name: Static analyze
-        run: |
-          cd toza_mobile
-          flutter analyze
+        working-directory: toza_mobile
+        run: flutter analyze
 
       - name: Run tests
-        run: |
-          cd toza_mobile
-          flutter test --coverage
+        working-directory: toza_mobile
+        run: flutter test --coverage
 
       - name: Build debug APK
-        run: |
-          cd toza_mobile
-          flutter build apk --debug --no-shrink
+        working-directory: toza_mobile
+        run: flutter build apk --debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
